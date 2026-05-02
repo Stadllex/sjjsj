@@ -1,3 +1,0 @@
-aiogram==3.13.1
-sqlalchemy==2.0.36
-aiosqlite==0.20.0
