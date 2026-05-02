@@ -90,8 +90,6 @@ def next_player_keyboard(
     spy_count: int,
     category_id: int,
     spy_slots: str,
-    location_word: str,
-    location_image_id: str = "",
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
@@ -106,8 +104,6 @@ def next_player_keyboard(
             spy_count=spy_count,
             category_id=category_id,
             spy_slots=spy_slots,
-            location_word=location_word,
-            location_image_id=location_image_id,
         ),
     )
     return builder.as_markup()

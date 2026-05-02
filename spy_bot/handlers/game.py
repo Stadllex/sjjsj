@@ -7,9 +7,12 @@ from keyboards import (
     RevealCallback, NextPlayerCallback, TimerCallback,
     reveal_keyboard, next_player_keyboard, timer_keyboard, stop_timer_keyboard,
 )
-from utils import escape_md, is_spy, ordinal, countdown_task
+from utils import escape_md, is_spy, countdown_task
 
 router = Router()
+
+# In-memory game state: chat_id -> {location_word, location_image_id}
+_game_state: dict[int, dict] = {}
 
 # Track active timer tasks: chat_id -> asyncio.Task
 _timer_tasks: dict[int, asyncio.Task] = {}
@@ -24,11 +27,11 @@ async def cb_reveal_role(query: CallbackQuery, callback_data: RevealCallback, bo
     spy_count = callback_data.spy_count
     category_id = callback_data.category_id
     spy_slots = callback_data.spy_slots
+    chat_id = query.message.chat.id
 
     is_this_spy = is_spy(player_index, spy_slots)
 
     if is_this_spy:
-        # ── Spy reveal ──
         other_spy_slots = [
             s for s in spy_slots.split(",") if s != str(player_index)
         ]
@@ -52,22 +55,30 @@ async def cb_reveal_role(query: CallbackQuery, callback_data: RevealCallback, bo
                 spy_count=spy_count,
                 category_id=category_id,
                 spy_slots=spy_slots,
-                location_word="",
-                location_image_id="",
             ),
         )
         await query.answer("🕵️ You are the spy!", show_alert=False)
 
     else:
-        # ── Civilian reveal — fetch location ──
-        word = await get_random_word(category_id)
-        if not word:
-            await query.answer("⚠️ No words found in this category!", show_alert=True)
-            return
+        # Fetch location only once per game (store in memory)
+        state = _game_state.get(chat_id, {})
+        if not state.get("location_word"):
+            word = await get_random_word(category_id)
+            if not word:
+                await query.answer("⚠️ No words found in this category!", show_alert=True)
+                return
+            _game_state[chat_id] = {
+                "location_word": word.word,
+                "location_image_id": word.image_id or "",
+            }
+            state = _game_state[chat_id]
+
+        location_word = state["location_word"]
+        location_image_id = state["location_image_id"]
 
         category = await get_category_by_id(category_id)
         cat_label = f"{category.emoji} {category.name}" if category else "Unknown"
-        safe_word = escape_md(word.word)
+        safe_word = escape_md(location_word)
         safe_cat = escape_md(cat_label)
 
         caption = (
@@ -84,15 +95,12 @@ async def cb_reveal_role(query: CallbackQuery, callback_data: RevealCallback, bo
             spy_count=spy_count,
             category_id=category_id,
             spy_slots=spy_slots,
-            location_word=word.word,
-            location_image_id=word.image_id or "",
         )
 
-        if word.image_id:
-            # Delete text message, send photo with caption
+        if location_image_id:
             await query.message.delete()
             await query.message.answer_photo(
-                photo=word.image_id,
+                photo=location_image_id,
                 caption=caption,
                 parse_mode="MarkdownV2",
                 reply_markup=next_kb,
@@ -104,7 +112,7 @@ async def cb_reveal_role(query: CallbackQuery, callback_data: RevealCallback, bo
                 reply_markup=next_kb,
             )
 
-        await query.answer(f"📍 {word.word}", show_alert=False)
+        await query.answer(f"📍 {location_word}", show_alert=False)
 
 
 # ─── Next Player (The Wipe) ─────────────────────────────────────
@@ -116,6 +124,7 @@ async def cb_next_player(query: CallbackQuery, callback_data: NextPlayerCallback
     spy_count = callback_data.spy_count
     category_id = callback_data.category_id
     spy_slots = callback_data.spy_slots
+    chat_id = query.message.chat.id
 
     next_player = current_player + 1
 
@@ -123,10 +132,11 @@ async def cb_next_player(query: CallbackQuery, callback_data: NextPlayerCallback
     try:
         await query.message.delete()
     except Exception:
-        pass  # Already deleted or can't delete
+        pass
 
     if next_player > total_players:
-        # ── All players have seen their roles — show timer selection ──
+        _game_state.pop(chat_id, None)
+
         spy_plural = "spies" if spy_count > 1 else "spy"
         await query.message.answer(
             f"✅ *All {total_players} players have seen their roles\\!*\n\n"
@@ -138,7 +148,6 @@ async def cb_next_player(query: CallbackQuery, callback_data: NextPlayerCallback
             reply_markup=timer_keyboard(duration=300),
         )
     else:
-        # ── Next player's turn ──
         safe_name = escape_md(f"Player {next_player}")
         await query.message.answer(
             f"📱 *{safe_name}*, pick up the phone\\!\n\n"
@@ -172,7 +181,6 @@ async def cb_timer_start(query: CallbackQuery, callback_data: TimerCallback, bot
     duration = callback_data.duration
     chat_id = query.message.chat.id
 
-    # Cancel any running timer for this chat
     if chat_id in _timer_tasks:
         _timer_tasks[chat_id].cancel()
 
