@@ -1,55 +1,68 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy import select, delete
-from .models import Base, Category, Word
-from typing import Optional
+import os
 import random
+from typing import Optional
 
-DATABASE_URL = "sqlite+aiosqlite:///spy_bot.db"
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy import select
+
+from .models import Base, Category, Word
+
+
+def get_database_url() -> str:
+    url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///spy_bot.db")
+
+    # Railway даёт postgres:// — меняем на правильный asyncpg драйвер
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+    # Если вдруг уже postgresql:// без asyncpg
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+    return url
+
+
+DATABASE_URL = get_database_url()
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 
 async def init_db():
-    """Create all tables and seed default data."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     await seed_default_data()
 
 
 async def seed_default_data():
-    """Seed the database with default categories and words if empty."""
     async with async_session_factory() as session:
         result = await session.execute(select(Category))
         if result.scalars().first():
-            return  # Already seeded
+            return  # Уже засеяно
 
         default_data = {
-            ("🌍 Locations", "🌍"): [
-                "Airport", "Bank", "Beach", "Casino", "Cathedral",
-                "Circus", "Corporate Party", "Crusader Army", "Day Spa",
-                "Embassy", "Hospital", "Hotel", "Military Base", "Movie Studio",
-                "Ocean Liner", "Passenger Train", "Pirate Ship", "Polar Station",
-                "Police Station", "Restaurant", "School", "Service Station",
-                "Space Station", "Submarine", "Supermarket", "Theater",
-                "University", "World War II Squad",
+            ("Локации", "🌍"): [
+                "Аэропорт", "Банк", "Пляж", "Казино", "Собор",
+                "Цирк", "Корпоратив", "Армия крестоносцев", "Спа-салон",
+                "Посольство", "Больница", "Отель", "Военная база", "Киностудия",
+                "Океанский лайнер", "Пассажирский поезд", "Пиратский корабль",
+                "Полярная станция", "Полицейский участок", "Ресторан", "Школа",
+                "Автозаправка", "Космическая станция", "Подводная лодка",
+                "Супермаркет", "Театр", "Университет",
             ],
-            ("🚀 Sci-Fi", "🚀"): [
-                "Space Colony", "Alien Mothership", "Time Machine",
-                "Asteroid Mine", "Cyberpunk City", "Robot Factory",
-                "Parallel Universe", "Wormhole Station", "Terraformed Mars",
-                "Space Casino", "Galactic Senate", "Cloning Facility",
+            ("Фантастика", "🚀"): [
+                "Космическая колония", "Корабль пришельцев", "Машина времени",
+                "Астероидный рудник", "Киберпанк-город", "Завод роботов",
+                "Параллельная вселенная", "Галактический сенат", "Терраформированный Марс",
             ],
-            ("🏰 Fantasy", "🏰"): [
-                "Dragon's Lair", "Wizard Tower", "Elven Forest",
-                "Dwarf Mine", "Haunted Castle", "Mermaid Kingdom",
-                "Ancient Ruins", "Enchanted Tavern", "Fairy Market",
-                "Giant's Castle", "Portal Nexus", "Sacred Temple",
+            ("Фэнтези", "🏰"): [
+                "Логово дракона", "Башня волшебника", "Лес эльфов",
+                "Шахта гномов", "Замок с привидениями", "Королевство русалок",
+                "Древние руины", "Зачарованная таверна", "Рынок фей",
             ],
-            ("🍕 Food & Drink", "🍕"): [
-                "Sushi Restaurant", "Pizza Parlor", "Wine Cellar",
-                "Candy Factory", "Brewery", "Bakery", "Food Truck",
-                "Ice Cream Shop", "Coffee Roastery", "Cheese Cave",
+            ("Еда и напитки", "🍕"): [
+                "Суши-ресторан", "Пиццерия", "Винный погреб",
+                "Кондитерская фабрика", "Пивоварня", "Пекарня",
+                "Фудтрак", "Кафе-мороженое", "Кофейня",
             ],
         }
 
@@ -57,15 +70,13 @@ async def seed_default_data():
             category = Category(name=name, emoji=emoji)
             session.add(category)
             await session.flush()
-
             for word_text in words:
-                word = Word(category_id=category.id, word=word_text)
-                session.add(word)
+                session.add(Word(category_id=category.id, word=word_text))
 
         await session.commit()
 
 
-# ─── Category CRUD ──────────────────────────────────────────────
+# ─── Категории ───────────────────────────────────────────────────
 
 async def get_all_categories() -> list[Category]:
     async with async_session_factory() as session:
@@ -90,9 +101,7 @@ async def create_category(name: str, emoji: str = "🌍") -> Category:
 
 async def delete_category(category_id: int) -> bool:
     async with async_session_factory() as session:
-        result = await session.execute(
-            select(Category).where(Category.id == category_id)
-        )
+        result = await session.execute(select(Category).where(Category.id == category_id))
         category = result.scalar_one_or_none()
         if not category:
             return False
@@ -101,7 +110,7 @@ async def delete_category(category_id: int) -> bool:
         return True
 
 
-# ─── Word CRUD ──────────────────────────────────────────────────
+# ─── Слова ───────────────────────────────────────────────────────
 
 async def get_words_by_category(category_id: int) -> list[Word]:
     async with async_session_factory() as session:

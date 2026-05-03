@@ -7,9 +7,9 @@ from .callbacks import (
 from database import Category, Word
 
 
-# ─── Setup keyboards ────────────────────────────────────────────
+# ─── Клавиатуры настройки ────────────────────────────────────────
 
-def players_keyboard(selected: int = 3) -> InlineKeyboardMarkup:
+def players_keyboard(selected: int = 4) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for n in range(2, 13):
         mark = "✅ " if n == selected else ""
@@ -20,7 +20,7 @@ def players_keyboard(selected: int = 3) -> InlineKeyboardMarkup:
     builder.adjust(4)
     builder.row(
         InlineKeyboardButton(
-            text="Next ➡️",
+            text="Далее ➡️",
             callback_data=SetupCallback(action="confirm_players", value=selected).pack(),
         )
     )
@@ -39,11 +39,11 @@ def spies_keyboard(player_count: int, selected: int = 1) -> InlineKeyboardMarkup
     builder.adjust(4)
     builder.row(
         InlineKeyboardButton(
-            text="⬅️ Back",
+            text="⬅️ Назад",
             callback_data=SetupCallback(action="back_to_players", value=0).pack(),
         ),
         InlineKeyboardButton(
-            text="Next ➡️",
+            text="Далее ➡️",
             callback_data=SetupCallback(action="confirm_spies", value=selected).pack(),
         ),
     )
@@ -58,10 +58,16 @@ def categories_keyboard(categories: list[Category]) -> InlineKeyboardMarkup:
             callback_data=CategoryCallback(category_id=cat.id),
         )
     builder.adjust(2)
+    builder.row(
+        InlineKeyboardButton(
+            text="⬅️ Назад",
+            callback_data=SetupCallback(action="back_to_spies", value=0).pack(),
+        )
+    )
     return builder.as_markup()
 
 
-# ─── Game keyboards ─────────────────────────────────────────────
+# ─── Игровые клавиатуры ──────────────────────────────────────────
 
 def reveal_keyboard(
     player_index: int,
@@ -72,7 +78,7 @@ def reveal_keyboard(
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="👁 Reveal My Role",
+        text="👁 Узнать свою роль",
         callback_data=RevealCallback(
             player_index=player_index,
             total_players=total_players,
@@ -92,9 +98,8 @@ def next_player_keyboard(
     spy_slots: str,
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-
     is_last = player_index >= total_players
-    next_label = "▶️ Start Game" if is_last else f"📱 Pass to Player {player_index + 1}"
+    next_label = "▶️ Начать игру" if is_last else f"📱 Передать игроку {player_index + 1}"
 
     builder.button(
         text=next_label,
@@ -111,7 +116,7 @@ def next_player_keyboard(
 
 def timer_keyboard(duration: int = 300) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    for label, secs in [("3 min", 180), ("5 min", 300), ("8 min", 480), ("10 min", 600)]:
+    for label, secs in [("3 мин", 180), ("5 мин", 300), ("8 мин", 480), ("10 мин", 600)]:
         mark = "✅ " if secs == duration else ""
         builder.button(
             text=f"{mark}{label}",
@@ -120,7 +125,7 @@ def timer_keyboard(duration: int = 300) -> InlineKeyboardMarkup:
     builder.adjust(4)
     builder.row(
         InlineKeyboardButton(
-            text="⏱ Start Timer",
+            text="⏱ Запустить таймер",
             callback_data=TimerCallback(action="start", duration=duration).pack(),
         )
     )
@@ -130,18 +135,18 @@ def timer_keyboard(duration: int = 300) -> InlineKeyboardMarkup:
 def stop_timer_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="⏹ Stop Timer",
+        text="⏹ Остановить таймер",
         callback_data=TimerCallback(action="stop", duration=0),
     )
     return builder.as_markup()
 
 
-# ─── Admin keyboards ────────────────────────────────────────────
+# ─── Админ клавиатуры ─────────────────────────────────────────────
 
 def admin_main_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.button(text="📂 Manage Categories", callback_data=AdminCallback(action="categories"))
-    builder.button(text="➕ Add Category", callback_data=AdminCallback(action="add_category"))
+    builder.button(text="📂 Категории", callback_data=AdminCallback(action="categories"))
+    builder.button(text="➕ Добавить категорию", callback_data=AdminCallback(action="add_category"))
     builder.adjust(1)
     return builder.as_markup()
 
@@ -156,7 +161,7 @@ def admin_categories_keyboard(categories: list[Category]) -> InlineKeyboardMarku
     builder.adjust(1)
     builder.row(
         InlineKeyboardButton(
-            text="⬅️ Back",
+            text="⬅️ Назад",
             callback_data=AdminCallback(action="back").pack(),
         )
     )
@@ -165,18 +170,9 @@ def admin_categories_keyboard(categories: list[Category]) -> InlineKeyboardMarku
 
 def admin_category_detail_keyboard(category_id: int, page: int = 0) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.button(
-        text="➕ Add Word",
-        callback_data=AdminCallback(action="add_word", target_id=category_id),
-    )
-    builder.button(
-        text="🗑 Delete Category",
-        callback_data=AdminCallback(action="del_cat", target_id=category_id),
-    )
-    builder.button(
-        text="⬅️ Back",
-        callback_data=AdminCallback(action="categories"),
-    )
+    builder.button(text="➕ Добавить слово", callback_data=AdminCallback(action="add_word", target_id=category_id))
+    builder.button(text="🗑 Удалить категорию", callback_data=AdminCallback(action="del_cat", target_id=category_id))
+    builder.button(text="⬅️ Назад", callback_data=AdminCallback(action="categories"))
     builder.adjust(1)
     return builder.as_markup()
 
@@ -185,7 +181,7 @@ def admin_words_keyboard(words: list[Word], category_id: int, page: int = 0) -> 
     builder = InlineKeyboardBuilder()
     page_size = 8
     start = page * page_size
-    page_words = words[start : start + page_size]
+    page_words = words[start: start + page_size]
 
     for word in page_words:
         img_icon = "🖼 " if word.image_id else ""
@@ -195,32 +191,27 @@ def admin_words_keyboard(words: list[Word], category_id: int, page: int = 0) -> 
         )
     builder.adjust(2)
 
-    # Pagination
     nav = []
     if page > 0:
-        nav.append(
-            InlineKeyboardButton(
-                text="⬅️ Prev",
-                callback_data=WordPageCallback(category_id=category_id, page=page - 1).pack(),
-            )
-        )
+        nav.append(InlineKeyboardButton(
+            text="⬅️ Назад",
+            callback_data=WordPageCallback(category_id=category_id, page=page - 1).pack(),
+        ))
     if start + page_size < len(words):
-        nav.append(
-            InlineKeyboardButton(
-                text="Next ➡️",
-                callback_data=WordPageCallback(category_id=category_id, page=page + 1).pack(),
-            )
-        )
+        nav.append(InlineKeyboardButton(
+            text="Вперёд ➡️",
+            callback_data=WordPageCallback(category_id=category_id, page=page + 1).pack(),
+        ))
     if nav:
         builder.row(*nav)
 
     builder.row(
         InlineKeyboardButton(
-            text="➕ Add Word",
+            text="➕ Добавить слово",
             callback_data=AdminCallback(action="add_word", target_id=category_id).pack(),
         ),
         InlineKeyboardButton(
-            text="🔙 Categories",
+            text="🔙 Категории",
             callback_data=AdminCallback(action="categories").pack(),
         ),
     )
@@ -230,11 +221,11 @@ def admin_words_keyboard(words: list[Word], category_id: int, page: int = 0) -> 
 def confirm_delete_keyboard(action: str, target_id: int, back_id: int = 0) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="✅ Yes, Delete",
+        text="✅ Да, удалить",
         callback_data=AdminCallback(action=f"confirm_{action}", target_id=target_id),
     )
     builder.button(
-        text="❌ Cancel",
+        text="❌ Отмена",
         callback_data=AdminCallback(action="words", target_id=back_id),
     )
     builder.adjust(2)

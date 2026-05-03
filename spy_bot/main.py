@@ -3,12 +3,13 @@ import logging
 import os
 import sys
 
-# Ensure the bot's own directory is on the path regardless of where it's launched from
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import BotCommand, BotCommandScopeDefault
 
 from database import init_db
 from handlers import setup, game, admin
@@ -20,15 +21,24 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+async def set_bot_commands(bot: Bot):
+    commands = [
+        BotCommand(command="start", description="🎮 Начать новую игру"),
+        BotCommand(command="admin", description="⚙️ Управление категориями"),
+        BotCommand(command="commands", description="📋 Список всех команд"),
+        BotCommand(command="cancel", description="❌ Отменить текущее действие"),
+    ]
+    await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
+
+
 async def main():
     token = os.getenv("BOT_TOKEN")
     if not token:
-        raise ValueError("BOT_TOKEN environment variable is not set!")
+        raise ValueError("BOT_TOKEN не установлен!")
 
-    # Initialize database
-    logger.info("Initializing database...")
+    logger.info("Инициализация базы данных...")
     await init_db()
-    logger.info("Database ready.")
+    logger.info("База данных готова.")
 
     bot = Bot(
         token=token,
@@ -36,12 +46,13 @@ async def main():
     )
     dp = Dispatcher(storage=MemoryStorage())
 
-    # Register routers (order matters — more specific first)
     dp.include_router(setup.router)
     dp.include_router(game.router)
     dp.include_router(admin.router)
 
-    logger.info("Starting bot polling...")
+    await set_bot_commands(bot)
+
+    logger.info("Бот запущен...")
     try:
         await dp.start_polling(bot, skip_updates=True)
     finally:

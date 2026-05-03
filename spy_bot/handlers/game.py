@@ -11,14 +11,14 @@ from utils import escape_md, is_spy, countdown_task
 
 router = Router()
 
-# In-memory game state: chat_id -> {location_word, location_image_id}
+# Состояние игры в памяти: chat_id -> {location_word, location_image_id}
 _game_state: dict[int, dict] = {}
 
-# Track active timer tasks: chat_id -> asyncio.Task
+# Таймеры: chat_id -> asyncio.Task
 _timer_tasks: dict[int, asyncio.Task] = {}
 
 
-# ─── Reveal Role ────────────────────────────────────────────────
+# ─── Показ роли ──────────────────────────────────────────────────
 
 @router.callback_query(RevealCallback.filter())
 async def cb_reveal_role(query: CallbackQuery, callback_data: RevealCallback, bot: Bot):
@@ -32,18 +32,16 @@ async def cb_reveal_role(query: CallbackQuery, callback_data: RevealCallback, bo
     is_this_spy = is_spy(player_index, spy_slots)
 
     if is_this_spy:
-        other_spy_slots = [
-            s for s in spy_slots.split(",") if s != str(player_index)
-        ]
+        other_spy_slots = [s for s in spy_slots.split(",") if s != str(player_index)]
         spy_note = ""
         if other_spy_slots:
-            partners = ", ".join(f"Player {s}" for s in other_spy_slots)
-            spy_note = f"\n🤝 _Your partner{'s' if len(other_spy_slots) > 1 else ''}: {escape_md(partners)}_"
+            partners = ", ".join(f"Игрок {s}" for s in other_spy_slots)
+            spy_note = f"\n🤝 _Твой{'и' if len(other_spy_slots) > 1 else ''} партнёр{'ы' if len(other_spy_slots) > 1 else ''}: {escape_md(partners)}_"
 
         text = (
-            f"🔴 *You are the SPY\\!*\n\n"
-            f"You don't know the location\\.\n"
-            f"Blend in — ask clever questions and avoid suspicion\\!{spy_note}"
+            f"🔴 *Ты ШПИОН\\!*\n\n"
+            f"Ты не знаешь локацию\\.\n"
+            f"Притворись своим — задавай умные вопросы и не раскройся\\!{spy_note}"
         )
 
         await query.message.edit_text(
@@ -57,15 +55,14 @@ async def cb_reveal_role(query: CallbackQuery, callback_data: RevealCallback, bo
                 spy_slots=spy_slots,
             ),
         )
-        await query.answer("🕵️ You are the spy!", show_alert=False)
+        await query.answer("🕵️ Ты шпион!", show_alert=False)
 
     else:
-        # Fetch location only once per game (store in memory)
         state = _game_state.get(chat_id, {})
         if not state.get("location_word"):
             word = await get_random_word(category_id)
             if not word:
-                await query.answer("⚠️ No words found in this category!", show_alert=True)
+                await query.answer("⚠️ В категории нет слов!", show_alert=True)
                 return
             _game_state[chat_id] = {
                 "location_word": word.word,
@@ -77,16 +74,16 @@ async def cb_reveal_role(query: CallbackQuery, callback_data: RevealCallback, bo
         location_image_id = state["location_image_id"]
 
         category = await get_category_by_id(category_id)
-        cat_label = f"{category.emoji} {category.name}" if category else "Unknown"
+        cat_label = f"{category.emoji} {category.name}" if category else "Неизвестно"
         safe_word = escape_md(location_word)
         safe_cat = escape_md(cat_label)
 
         caption = (
-            f"🟢 *You are a Civilian\\!*\n\n"
-            f"📍 *Location:* `{safe_word}`\n"
-            f"📂 _Category: {safe_cat}_\n\n"
-            f"_Remember the location and discuss naturally\\. "
-            f"Help find the spy without being too obvious\\!_"
+            f"🟢 *Ты Мирный житель\\!*\n\n"
+            f"📍 *Локация:* `{safe_word}`\n"
+            f"📂 _Категория: {safe_cat}_\n\n"
+            f"_Запомни локацию и веди себя естественно\\. "
+            f"Помоги найти шпиона, не раскрывая себя\\!_"
         )
 
         next_kb = next_player_keyboard(
@@ -115,7 +112,7 @@ async def cb_reveal_role(query: CallbackQuery, callback_data: RevealCallback, bo
         await query.answer(f"📍 {location_word}", show_alert=False)
 
 
-# ─── Next Player (The Wipe) ─────────────────────────────────────
+# ─── Следующий игрок ─────────────────────────────────────────────
 
 @router.callback_query(NextPlayerCallback.filter())
 async def cb_next_player(query: CallbackQuery, callback_data: NextPlayerCallback):
@@ -128,7 +125,6 @@ async def cb_next_player(query: CallbackQuery, callback_data: NextPlayerCallback
 
     next_player = current_player + 1
 
-    # SECURITY: Always delete the current message first
     try:
         await query.message.delete()
     except Exception:
@@ -137,22 +133,21 @@ async def cb_next_player(query: CallbackQuery, callback_data: NextPlayerCallback
     if next_player > total_players:
         _game_state.pop(chat_id, None)
 
-        spy_plural = "spies" if spy_count > 1 else "spy"
+        spy_word = "шпион" if spy_count == 1 else "шпиона" if spy_count < 5 else "шпионов"
         await query.message.answer(
-            f"✅ *All {total_players} players have seen their roles\\!*\n\n"
-            f"There {'are' if spy_count > 1 else 'is'} *{spy_count} {spy_plural}* among you\\.\n\n"
-            f"🗣 *Start the discussion\\!* Ask each other questions about the location\\. "
-            f"The spy doesn't know it — but must pretend they do\\!\n\n"
-            f"⏱ *Set a discussion timer:*",
+            f"✅ *Все {total_players} игроков увидели свои роли\\!*\n\n"
+            f"Среди вас *{spy_count} {spy_word}*\\.\n\n"
+            f"🗣 *Начинайте обсуждение\\!* Задавайте друг другу вопросы о локации\\. "
+            f"Шпион не знает её — но делает вид, что знает\\!\n\n"
+            f"⏱ *Выберите время обсуждения:*",
             parse_mode="MarkdownV2",
             reply_markup=timer_keyboard(duration=300),
         )
     else:
-        safe_name = escape_md(f"Player {next_player}")
         await query.message.answer(
-            f"📱 *{safe_name}*, pick up the phone\\!\n\n"
-            f"_Press the button below to see your secret role\\._\n\n"
-            f"⚠️ _Don't let others see your screen\\!_",
+            f"📱 *Игрок {next_player}*, возьми телефон\\!\n\n"
+            f"_Нажми кнопку ниже, чтобы увидеть свою роль\\._\n\n"
+            f"⚠️ _Не показывай экран другим\\!_",
             parse_mode="MarkdownV2",
             reply_markup=reveal_keyboard(
                 player_index=next_player,
@@ -166,7 +161,7 @@ async def cb_next_player(query: CallbackQuery, callback_data: NextPlayerCallback
     await query.answer()
 
 
-# ─── Timer ──────────────────────────────────────────────────────
+# ─── Таймер ──────────────────────────────────────────────────────
 
 @router.callback_query(TimerCallback.filter(F.action == "choose"))
 async def cb_timer_choose(query: CallbackQuery, callback_data: TimerCallback):
@@ -186,9 +181,9 @@ async def cb_timer_start(query: CallbackQuery, callback_data: TimerCallback, bot
 
     mins = duration // 60
     await query.message.edit_text(
-        f"⏱ *Timer started: {mins} minutes*\n\n"
-        f"⏳ `{mins:02d}:00` remaining\n\n"
-        f"Discuss who the spy might be\\!",
+        f"⏱ *Таймер запущен: {mins} минут*\n\n"
+        f"⏳ `{mins:02d}:00` осталось\n\n"
+        f"Обсуждайте, кто может быть шпионом\\!",
         parse_mode="MarkdownV2",
         reply_markup=stop_timer_keyboard(),
     )
@@ -202,7 +197,7 @@ async def cb_timer_start(query: CallbackQuery, callback_data: TimerCallback, bot
         )
     )
     _timer_tasks[chat_id] = task
-    await query.answer(f"⏱ {mins}-minute timer started!")
+    await query.answer(f"⏱ Таймер {mins} мин запущен!")
 
 
 @router.callback_query(TimerCallback.filter(F.action == "stop"))
@@ -214,9 +209,9 @@ async def cb_timer_stop(query: CallbackQuery, bot: Bot):
         del _timer_tasks[chat_id]
 
     await query.message.edit_text(
-        "⏹ *Timer stopped\\.*\n\n"
-        "Make your vote — who is the spy\\?\n\n"
-        "_Use /start to play again\\!_",
+        "⏹ *Таймер остановлен\\.*\n\n"
+        "Голосуйте — кто шпион\\?\n\n"
+        "_Используй /start чтобы сыграть снова\\!_",
         parse_mode="MarkdownV2",
     )
-    await query.answer("Timer stopped.")
+    await query.answer("Таймер остановлен.")

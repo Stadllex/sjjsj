@@ -24,50 +24,57 @@ class AdminState(StatesGroup):
     waiting_word_image = State()
 
 
-# ─── /admin entry point ──────────────────────────────────────────
+# ─── /admin ──────────────────────────────────────────────────────
 
 @router.message(Command("admin"))
 @router.message(Command("settings"))
 async def cmd_admin(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
-        "⚙️ *Admin Panel*\n\n"
-        "Manage your game categories and locations\\.",
+        "⚙️ *Панель управления*\n\n"
+        "Управляй категориями и локациями\\.",
         parse_mode="MarkdownV2",
         reply_markup=admin_main_keyboard(),
     )
 
 
-# ─── Navigate to category list ───────────────────────────────────
+# ─── Список категорий ─────────────────────────────────────────────
 
 @router.callback_query(AdminCallback.filter(F.action == "categories"))
-@router.callback_query(AdminCallback.filter(F.action == "back"))
 async def cb_admin_categories(query: CallbackQuery, state: FSMContext):
     await state.clear()
     categories = await get_all_categories()
     count = len(categories)
-
-    text = (
-        f"📂 *Categories* \\({count}\\)\n\n"
-        "Tap a category to manage its words\\."
-    )
     await query.message.edit_text(
-        text=text,
+        f"📂 *Категории* \\({count}\\)\n\n"
+        "Нажми на категорию для управления\\.",
         parse_mode="MarkdownV2",
         reply_markup=admin_categories_keyboard(categories),
     )
     await query.answer()
 
 
-# ─── Add category ────────────────────────────────────────────────
+@router.callback_query(AdminCallback.filter(F.action == "back"))
+async def cb_admin_back(query: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await query.message.edit_text(
+        "⚙️ *Панель управления*\n\n"
+        "Управляй категориями и локациями\\.",
+        parse_mode="MarkdownV2",
+        reply_markup=admin_main_keyboard(),
+    )
+    await query.answer()
+
+
+# ─── Добавить категорию ───────────────────────────────────────────
 
 @router.callback_query(AdminCallback.filter(F.action == "add_category"))
 async def cb_add_category_start(query: CallbackQuery, state: FSMContext):
     await query.message.edit_text(
-        "➕ *New Category*\n\n"
-        "Send the category name\\.\n"
-        "_Optionally prefix with an emoji, e\\.g\\. `🏖 Beach Spots`_\n\n"
-        "Type /cancel to abort\\.",
+        "➕ *Новая категория*\n\n"
+        "Отправь название категории\\.\n"
+        "_Можно начать с эмодзи, например: `🏖 Пляжи`_\n\n"
+        "Напиши /cancel для отмены\\.",
         parse_mode="MarkdownV2",
     )
     await state.set_state(AdminState.waiting_category_name)
@@ -78,10 +85,9 @@ async def cb_add_category_start(query: CallbackQuery, state: FSMContext):
 async def msg_category_name(message: Message, state: FSMContext):
     raw = message.text.strip()
     if not raw:
-        await message.answer("⚠️ Category name cannot be empty\\.", parse_mode="MarkdownV2")
+        await message.answer("⚠️ Название не может быть пустым\\.", parse_mode="MarkdownV2")
         return
 
-    # Extract leading emoji if present
     emoji = "🌍"
     name = raw
     words = raw.split(maxsplit=1)
@@ -92,20 +98,19 @@ async def msg_category_name(message: Message, state: FSMContext):
     try:
         cat = await create_category(name=name, emoji=emoji)
         await message.answer(
-            f"✅ Category *{escape_md(cat.emoji + ' ' + cat.name)}* created\\!\n\n"
-            "Now add words via the admin panel\\.",
+            f"✅ Категория *{escape_md(cat.emoji + ' ' + cat.name)}* создана\\!",
             parse_mode="MarkdownV2",
             reply_markup=admin_main_keyboard(),
         )
     except Exception as e:
         await message.answer(
-            f"⚠️ Could not create category\\: {escape_md(str(e))}",
+            f"⚠️ Ошибка: {escape_md(str(e))}",
             parse_mode="MarkdownV2",
         )
     await state.clear()
 
 
-# ─── View words in a category ────────────────────────────────────
+# ─── Слова категории ──────────────────────────────────────────────
 
 @router.callback_query(AdminCallback.filter(F.action == "words"))
 async def cb_admin_words(query: CallbackQuery, callback_data: AdminCallback, state: FSMContext):
@@ -113,7 +118,7 @@ async def cb_admin_words(query: CallbackQuery, callback_data: AdminCallback, sta
     category_id = callback_data.target_id
     category = await get_category_by_id(category_id)
     if not category:
-        await query.answer("Category not found.", show_alert=True)
+        await query.answer("Категория не найдена.", show_alert=True)
         return
 
     words = await get_words_by_category(category_id)
@@ -121,8 +126,8 @@ async def cb_admin_words(query: CallbackQuery, callback_data: AdminCallback, sta
 
     await query.message.edit_text(
         f"📂 *{safe_cat}*\n"
-        f"_{len(words)} word{'s' if len(words) != 1 else ''}_\n\n"
-        "Tap a word to delete it, or add new ones below\\.",
+        f"_{len(words)} слов{'о' if len(words) == 1 else 'а' if len(words) < 5 else ''}_\n\n"
+        "Нажми на слово чтобы удалить, или добавь новое\\.",
         parse_mode="MarkdownV2",
         reply_markup=admin_words_keyboard(words, category_id=category_id, page=0),
     )
@@ -139,25 +144,25 @@ async def cb_word_page(query: CallbackQuery, callback_data: WordPageCallback, st
     safe_cat = escape_md(f"{category.emoji} {category.name}")
 
     await query.message.edit_text(
-        f"📂 *{safe_cat}*\n_{len(words)} words_",
+        f"📂 *{safe_cat}*\n_{len(words)} слов_",
         parse_mode="MarkdownV2",
         reply_markup=admin_words_keyboard(words, category_id=category_id, page=page),
     )
     await query.answer()
 
 
-# ─── Add word ────────────────────────────────────────────────────
+# ─── Добавить слово ───────────────────────────────────────────────
 
 @router.callback_query(AdminCallback.filter(F.action == "add_word"))
 async def cb_add_word_start(query: CallbackQuery, callback_data: AdminCallback, state: FSMContext):
     category_id = callback_data.target_id
     category = await get_category_by_id(category_id)
-    safe_cat = escape_md(f"{category.emoji} {category.name}" if category else "Unknown")
+    safe_cat = escape_md(f"{category.emoji} {category.name}" if category else "?")
 
     await query.message.edit_text(
-        f"➕ *Add Word to {safe_cat}*\n\n"
-        "Send the location name as a text message\\.\n"
-        "_Type /cancel to abort\\._",
+        f"➕ *Добавить слово в {safe_cat}*\n\n"
+        "Отправь название локации текстом\\.\n"
+        "_/cancel для отмены_",
         parse_mode="MarkdownV2",
     )
     await state.set_state(AdminState.waiting_word_text)
@@ -169,14 +174,14 @@ async def cb_add_word_start(query: CallbackQuery, callback_data: AdminCallback, 
 async def msg_word_text(message: Message, state: FSMContext):
     word_text = message.text.strip()
     if not word_text:
-        await message.answer("⚠️ Word cannot be empty\\.", parse_mode="MarkdownV2")
+        await message.answer("⚠️ Слово не может быть пустым\\.", parse_mode="MarkdownV2")
         return
 
     await state.update_data(word_text=word_text)
     await message.answer(
-        f"📝 Word: *{escape_md(word_text)}*\n\n"
-        "Now send a *photo* for this location \\(optional\\)\\.\n"
-        "Or type /skip to save without an image\\.",
+        f"📝 Слово: *{escape_md(word_text)}*\n\n"
+        "Теперь отправь *фото* для этой локации \\(необязательно\\)\\.\n"
+        "Или напиши /skip чтобы сохранить без фото\\.",
         parse_mode="MarkdownV2",
     )
     await state.set_state(AdminState.waiting_word_image)
@@ -187,17 +192,14 @@ async def msg_word_image(message: Message, state: FSMContext):
     data = await state.get_data()
     category_id = data["category_id"]
     word_text = data["word_text"]
-
-    # Use the highest-resolution photo
     file_id = message.photo[-1].file_id
 
     word = await add_word(category_id=category_id, word=word_text, image_id=file_id)
     category = await get_category_by_id(category_id)
-    safe_word = escape_md(word.word)
     safe_cat = escape_md(f"{category.emoji} {category.name}" if category else "")
 
     await message.answer(
-        f"✅ *{safe_word}* added to *{safe_cat}* with photo\\!",
+        f"✅ *{escape_md(word.word)}* добавлено в *{safe_cat}* с фото\\!",
         parse_mode="MarkdownV2",
         reply_markup=admin_main_keyboard(),
     )
@@ -212,23 +214,21 @@ async def msg_word_skip_image(message: Message, state: FSMContext):
 
     word = await add_word(category_id=category_id, word=word_text)
     category = await get_category_by_id(category_id)
-    safe_word = escape_md(word.word)
     safe_cat = escape_md(f"{category.emoji} {category.name}" if category else "")
 
     await message.answer(
-        f"✅ *{safe_word}* added to *{safe_cat}*\\.",
+        f"✅ *{escape_md(word.word)}* добавлено в *{safe_cat}*\\.",
         parse_mode="MarkdownV2",
         reply_markup=admin_main_keyboard(),
     )
     await state.clear()
 
 
-# ─── Delete word ─────────────────────────────────────────────────
+# ─── Удалить слово ────────────────────────────────────────────────
 
 @router.callback_query(AdminCallback.filter(F.action == "del_word"))
 async def cb_del_word_confirm(query: CallbackQuery, callback_data: AdminCallback):
     word_id = callback_data.target_id
-    # Find category to navigate back
     from database.db import async_session_factory
     from database.models import Word as WordModel
     from sqlalchemy import select
@@ -238,12 +238,11 @@ async def cb_del_word_confirm(query: CallbackQuery, callback_data: AdminCallback
         word = result.scalar_one_or_none()
 
     if not word:
-        await query.answer("Word not found.", show_alert=True)
+        await query.answer("Слово не найдено.", show_alert=True)
         return
 
-    safe_word = escape_md(word.word)
     await query.message.edit_text(
-        f"🗑 Delete *{safe_word}*?\n\nThis cannot be undone\\.",
+        f"🗑 Удалить *{escape_md(word.word)}*?\n\nЭто нельзя отменить\\.",
         parse_mode="MarkdownV2",
         reply_markup=confirm_delete_keyboard("word", word_id, back_id=word.category_id),
     )
@@ -254,37 +253,32 @@ async def cb_del_word_confirm(query: CallbackQuery, callback_data: AdminCallback
 async def cb_del_word_execute(query: CallbackQuery, callback_data: AdminCallback):
     word_id = callback_data.target_id
     success = await delete_word(word_id)
+    await query.answer("✅ Слово удалено." if success else "⚠️ Не найдено.", show_alert=False)
 
-    if success:
-        await query.answer("✅ Word deleted.", show_alert=False)
-    else:
-        await query.answer("⚠️ Word not found.", show_alert=True)
-
-    # Navigate back to admin categories
     categories = await get_all_categories()
     await query.message.edit_text(
-        "📂 *Categories*\n\nTap a category to manage its words\\.",
+        "📂 *Категории*\n\nНажми на категорию для управления\\.",
         parse_mode="MarkdownV2",
         reply_markup=admin_categories_keyboard(categories),
     )
 
 
-# ─── Delete category ─────────────────────────────────────────────
+# ─── Удалить категорию ────────────────────────────────────────────
 
 @router.callback_query(AdminCallback.filter(F.action == "del_cat"))
 async def cb_del_cat_confirm(query: CallbackQuery, callback_data: AdminCallback):
     cat_id = callback_data.target_id
     category = await get_category_by_id(cat_id)
     if not category:
-        await query.answer("Category not found.", show_alert=True)
+        await query.answer("Категория не найдена.", show_alert=True)
         return
 
     safe_cat = escape_md(f"{category.emoji} {category.name}")
     words = await get_words_by_category(cat_id)
 
     await query.message.edit_text(
-        f"🗑 Delete *{safe_cat}*?\n\n"
-        f"⚠️ This will also delete *{len(words)} words*\\. Cannot be undone\\.",
+        f"🗑 Удалить *{safe_cat}*?\n\n"
+        f"⚠️ Также удалится *{len(words)} слов*\\. Нельзя отменить\\.",
         parse_mode="MarkdownV2",
         reply_markup=confirm_delete_keyboard("cat", cat_id, back_id=cat_id),
     )
@@ -295,26 +289,22 @@ async def cb_del_cat_confirm(query: CallbackQuery, callback_data: AdminCallback)
 async def cb_del_cat_execute(query: CallbackQuery, callback_data: AdminCallback):
     cat_id = callback_data.target_id
     success = await delete_category(cat_id)
-
-    if success:
-        await query.answer("✅ Category deleted.", show_alert=False)
-    else:
-        await query.answer("⚠️ Category not found.", show_alert=True)
+    await query.answer("✅ Категория удалена." if success else "⚠️ Не найдена.")
 
     categories = await get_all_categories()
     await query.message.edit_text(
-        "📂 *Categories*",
+        "📂 *Категории*",
         parse_mode="MarkdownV2",
         reply_markup=admin_categories_keyboard(categories),
     )
 
 
-# ─── /cancel ─────────────────────────────────────────────────────
-
 @router.message(Command("cancel"))
 async def cmd_cancel(message: Message, state: FSMContext):
+    from handlers.setup import main_menu_keyboard
     await state.clear()
     await message.answer(
-        "❌ Cancelled\\. Use /start to play or /admin to manage content\\.",
+        "❌ Отменено\\.",
         parse_mode="MarkdownV2",
+        reply_markup=main_menu_keyboard(),
     )
