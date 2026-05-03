@@ -39,3 +39,8 @@ class AdminCallback(CallbackData, prefix="admin"):
 class WordPageCallback(CallbackData, prefix="wpage"):
     category_id: int
     page: int
+
+
+class WordImageCallback(CallbackData, prefix="wimg"):
+    word_id: int
+    category_id: int

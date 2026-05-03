@@ -3,6 +3,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from .callbacks import (
     SetupCallback, CategoryCallback, RevealCallback,
     NextPlayerCallback, TimerCallback, AdminCallback, WordPageCallback,
+    WordImageCallback,
 )
 from database import Category, Word
 
@@ -100,7 +101,6 @@ def next_player_keyboard(
     builder = InlineKeyboardBuilder()
     is_last = player_index >= total_players
     next_label = "▶️ Начать игру" if is_last else f"📱 Передать игроку {player_index + 1}"
-
     builder.button(
         text=next_label,
         callback_data=NextPlayerCallback(
@@ -168,15 +168,6 @@ def admin_categories_keyboard(categories: list[Category]) -> InlineKeyboardMarku
     return builder.as_markup()
 
 
-def admin_category_detail_keyboard(category_id: int, page: int = 0) -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    builder.button(text="➕ Добавить слово", callback_data=AdminCallback(action="add_word", target_id=category_id))
-    builder.button(text="🗑 Удалить категорию", callback_data=AdminCallback(action="del_cat", target_id=category_id))
-    builder.button(text="⬅️ Назад", callback_data=AdminCallback(action="categories"))
-    builder.adjust(1)
-    return builder.as_markup()
-
-
 def admin_words_keyboard(words: list[Word], category_id: int, page: int = 0) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     page_size = 8
@@ -186,8 +177,8 @@ def admin_words_keyboard(words: list[Word], category_id: int, page: int = 0) -> 
     for word in page_words:
         img_icon = "🖼 " if word.image_id else ""
         builder.button(
-            text=f"{img_icon}{word.word} ✕",
-            callback_data=AdminCallback(action="del_word", target_id=word.id),
+            text=f"{img_icon}{word.word}",
+            callback_data=AdminCallback(action="word_detail", target_id=word.id),
         )
     builder.adjust(2)
 
@@ -215,6 +206,30 @@ def admin_words_keyboard(words: list[Word], category_id: int, page: int = 0) -> 
             callback_data=AdminCallback(action="categories").pack(),
         ),
     )
+    return builder.as_markup()
+
+
+def word_detail_keyboard(word: Word, category_id: int) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    if word.image_id:
+        builder.button(
+            text="🖼 Заменить фото",
+            callback_data=WordImageCallback(word_id=word.id, category_id=category_id),
+        )
+    else:
+        builder.button(
+            text="📷 Прикрепить фото",
+            callback_data=WordImageCallback(word_id=word.id, category_id=category_id),
+        )
+    builder.button(
+        text="🗑 Удалить слово",
+        callback_data=AdminCallback(action="del_word", target_id=word.id),
+    )
+    builder.button(
+        text="⬅️ Назад",
+        callback_data=AdminCallback(action="words", target_id=category_id),
+    )
+    builder.adjust(1)
     return builder.as_markup()
 
 

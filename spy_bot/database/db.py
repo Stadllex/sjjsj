@@ -10,19 +10,14 @@ from .models import Base, Category, Word
 
 def get_database_url() -> str:
     url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///spy_bot.db")
-
-    # Railway даёт postgres:// — меняем на правильный asyncpg драйвер
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql+asyncpg://", 1)
-    # Если вдруг уже postgresql:// без asyncpg
-    elif url.startswith("postgresql://"):
+    elif url.startswith("postgresql://") and "+asyncpg" not in url:
         url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
-
     return url
 
 
 DATABASE_URL = get_database_url()
-
 engine = create_async_engine(DATABASE_URL, echo=False)
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -37,32 +32,67 @@ async def seed_default_data():
     async with async_session_factory() as session:
         result = await session.execute(select(Category))
         if result.scalars().first():
-            return  # Уже засеяно
+            return
 
         default_data = {
-            ("Локации", "🌍"): [
-                "Аэропорт", "Банк", "Пляж", "Казино", "Собор",
-                "Цирк", "Корпоратив", "Армия крестоносцев", "Спа-салон",
-                "Посольство", "Больница", "Отель", "Военная база", "Киностудия",
-                "Океанский лайнер", "Пассажирский поезд", "Пиратский корабль",
-                "Полярная станция", "Полицейский участок", "Ресторан", "Школа",
-                "Автозаправка", "Космическая станция", "Подводная лодка",
-                "Супермаркет", "Театр", "Университет",
+            ("Страны", "🌍"): [
+                "Россия", "США", "Германия", "Франция", "Япония",
+                "Китай", "Бразилия", "Австралия", "Индия", "Италия",
+                "Испания", "Канада", "Мексика", "Аргентина", "Египет",
+                "Турция", "Южная Корея", "Саудовская Аравия", "ЮАР", "Норвегия",
             ],
-            ("Фантастика", "🚀"): [
-                "Космическая колония", "Корабль пришельцев", "Машина времени",
-                "Астероидный рудник", "Киберпанк-город", "Завод роботов",
-                "Параллельная вселенная", "Галактический сенат", "Терраформированный Марс",
+            ("Фильмы", "🎬"): [
+                "Интерстеллар", "Начало", "Титаник", "Аватар", "Матрица",
+                "Зелёная книга", "Паразиты", "Джокер", "Дюна", "Оппенгеймер",
+                "Бойцовский клуб", "Форрест Гамп", "Побег из Шоушенка", "Гладиатор",
+                "Властелин колец", "Гарри Поттер", "Люди в чёрном", "Терминатор",
             ],
-            ("Фэнтези", "🏰"): [
-                "Логово дракона", "Башня волшебника", "Лес эльфов",
-                "Шахта гномов", "Замок с привидениями", "Королевство русалок",
-                "Древние руины", "Зачарованная таверна", "Рынок фей",
+            ("Сериалы", "📺"): [
+                "Игра престолов", "Во все тяжкие", "Чернобыль", "Ведьмак",
+                "Мандалорец", "Очень странные дела", "Корона", "Острые козырьки",
+                "Друзья", "Шерлок", "Во все тяжкие", "Лучше звоните Солу",
+                "Тёмные начала", "Эйфория", "Белый лотос", "Сукцессия",
             ],
-            ("Еда и напитки", "🍕"): [
-                "Суши-ресторан", "Пиццерия", "Винный погреб",
-                "Кондитерская фабрика", "Пивоварня", "Пекарня",
-                "Фудтрак", "Кафе-мороженое", "Кофейня",
+            ("Мобильные игры", "📱"): [
+                "Clash of Clans", "PUBG Mobile", "Genshin Impact", "Brawl Stars",
+                "Among Us", "Clash Royale", "Pokemon GO", "Subway Surfers",
+                "Candy Crush", "Mobile Legends", "Free Fire", "Hearthstone",
+                "Arena of Valor", "Wild Rift", "Asphalt 9", "Hill Climb Racing",
+            ],
+            ("ПК игры", "🖥"): [
+                "Minecraft", "GTA 5", "CS:GO", "Dota 2", "League of Legends",
+                "Cyberpunk 2077", "The Witcher 3", "Red Dead Redemption 2",
+                "Fortnite", "Valorant", "Elden Ring", "Skyrim",
+                "Half-Life", "Portal", "Terraria", "Stardew Valley",
+            ],
+            ("Приложения", "📲"): [
+                "Instagram", "TikTok", "YouTube", "Telegram", "WhatsApp",
+                "Spotify", "Netflix", "Uber", "Google Maps", "Shazam",
+                "Discord", "Zoom", "Duolingo", "Notion", "Figma", "Canva",
+            ],
+            ("Марвел персонажи", "🦸"): [
+                "Человек-паук", "Железный человек", "Тор", "Капитан Америка",
+                "Халк", "Чёрная вдова", "Доктор Стрэндж", "Чёрная пантера",
+                "Локи", "Ванда", "Стражи Галактики", "Дэдпул",
+                "Антмен", "Соколиный глаз", "Капитан Марвел", "Шан-Чи",
+            ],
+            ("DC персонажи", "🦇"): [
+                "Бэтмен", "Супермен", "Чудо-женщина", "Флэш", "Аквамен",
+                "Джокер", "Харли Квинн", "Лекс Лютор", "Зелёная стрела",
+                "Киборг", "Шазам", "Яд Плющ", "Пингвин", "Риддлер",
+                "Найтвинг", "Зелёный фонарь",
+            ],
+            ("Известные люди", "🌟"): [
+                "Илон Маск", "Билл Гейтс", "Стив Джобс", "Альберт Эйнштейн",
+                "Леонардо да Винчи", "Наполеон", "Моцарт", "Майкл Джексон",
+                "Мухаммед Али", "Криштиану Роналду", "Лионель Месси",
+                "Опра Уинфри", "Маск", "Стивен Хокинг", "Чарли Чаплин",
+            ],
+            ("Футбольные команды", "⚽"): [
+                "Реал Мадрид", "Барселона", "Манчестер Сити", "Манчестер Юнайтед",
+                "Ливерпуль", "Челси", "Арсенал", "ПСЖ", "Бавария",
+                "Ювентус", "Милан", "Интер", "Атлетико Мадрид",
+                "Боруссия Дортмунд", "Аякс", "Зенит",
             ],
         }
 
@@ -120,6 +150,12 @@ async def get_words_by_category(category_id: int) -> list[Word]:
         return result.scalars().all()
 
 
+async def get_word_by_id(word_id: int) -> Optional[Word]:
+    async with async_session_factory() as session:
+        result = await session.execute(select(Word).where(Word.id == word_id))
+        return result.scalar_one_or_none()
+
+
 async def add_word(category_id: int, word: str, image_id: Optional[str] = None) -> Word:
     async with async_session_factory() as session:
         new_word = Word(category_id=category_id, word=word, image_id=image_id)
@@ -127,6 +163,18 @@ async def add_word(category_id: int, word: str, image_id: Optional[str] = None) 
         await session.commit()
         await session.refresh(new_word)
         return new_word
+
+
+async def set_word_image(word_id: int, image_id: str) -> Optional[Word]:
+    async with async_session_factory() as session:
+        result = await session.execute(select(Word).where(Word.id == word_id))
+        word = result.scalar_one_or_none()
+        if not word:
+            return None
+        word.image_id = image_id
+        await session.commit()
+        await session.refresh(word)
+        return word
 
 
 async def delete_word(word_id: int) -> bool:
