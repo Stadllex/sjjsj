@@ -41,8 +41,8 @@ async def seed_default_data():
                 "Швеция", "Швейцария", "Нидерланды", "Греция", "Польша", "Таиланд", "Вьетнам", "Индонезия", "ОАЭ", "Португалия",
                 "Финляндия", "Дания", "Австрия", "Бельгия", "Чехия", "Венгрия", "Израиль", "Марокко", "Куба", "Чили",
                 "Перу", "Казахстан", "Грузия", "Исландия", "Новая Зеландия", "Сингапур", "Ирландия", "Малайзия", "Сербия", "Нигерия",
-                "Алжир", "Ангола", "Боливия", "Ватикан", "Венесуэла", "Вьетнам", "Гана", "Доминикана", "Иран", "Ирак",
-                "Кения", "Колумбия", "Люксембург", "Монако", "Монголия", "Пакистан", "Панама", "Уругвай", "Филиппины", "Хорватия"
+                "Алжир", "Ангола", "Боливия", "Ватикан", "Венесуэла", "Гана", "Доминикана", "Иран", "Ирак", "Кения",
+                "Колумбия", "Люксембург", "Монако", "Монголия", "Пакистан", "Панама", "Уругвай", "Филиппины", "Хорватия", "Эстония"
             ],
             ("Фильмы", "🎬"): [
                 "Интерстеллар", "Начало", "Титаник", "Аватар", "Матрица", "Зелёная книга", "Паразиты", "Джокер", "Дюна", "Оппенгеймер",
@@ -52,7 +52,8 @@ async def seed_default_data():
                 "1+1", "Легенда №17", "Брат", "Служебный роман", "Иван Васильевич меняет профессию", "Бриллиантовая рука", "Кин-дза-дза!",
                 "Чужой", "Хищник", "Молчание ягнят", "Семь", "Престиж", "Остров проклятых", "Поймай меня, если сможешь", "Один дома", "Крепкий орешек",
                 "Звезда родилась", "Мемуары гейши", "Пианист", "Список Шиндлера", "Красотка", "Гордость и предубеждение", "Дневник памяти", "Мальчишник в Вегасе",
-                "Джон Уик", "Безумный Макс", "Черная пантера", "Чудо-женщина", "Мстители", "Лабиринт Фавна", "Большой Лебовски", "Карты, деньги, два ствола"
+                "Джон Уик", "Безумный Макс", "Черная пантера", "Чудо-женщина", "Мстители", "Лабиринт Фавна", "Большой Лебовски", "Карты, деньги, два ствола",
+                "Зодиак", "Социальная сеть", "Гравитация", "Бегущий по лезвию"
             ],
             ("Сериалы", "📺"): [
                 "Игра престолов", "Во все тяжкие", "Чернобыль", "Ведьмак", "Мандалорец", "Очень странные дела", "Корона", "Острые козырьки",
@@ -63,7 +64,7 @@ async def seed_default_data():
                 "Отчаянные домохозяйки", "Твин Пикс", "Остаться в живых", "Побег", "Сыны анархии", "Викинги", "Рассказ служанки",
                 "Уэнсдей", "Одни из нас", "Медведь", "Тед Лассо", "Мейр из Исттауна", "Ход королевы", "Монастырь", "Триггер",
                 "Кухня", "Интерны", "Метод", "Домашний арест", "Миллиарды", "Карточный домик", "Бесстыжие", "Фарго", "Мистер Робот", "Элита",
-                "Тьма", "Благие знамения", "Люцифер", "Декстер", "Менталист", "Сплетница", "Волчонок", "Тайны Смолвиля"
+                "Тьма", "Благие знамения", "Люцифер", "Декстер", "Менталист", "Сплетница", "Волчонок", "Тайны Смолвиля", "Сопрано", "Прослушка"
             ],
             ("Мобильные игры", "📱"): [
                 "Clash of Clans", "PUBG Mobile", "Genshin Impact", "Brawl Stars", "Among Us", "Clash Royale", "Pokemon GO", "Subway Surfers",
@@ -72,8 +73,9 @@ async def seed_default_data():
                 "Jetpack Joyride", "Temple Run", "Shadow Fight 2", "Vector", "Flappy Bird", "Cut the Rope", "Talking Tom", "SimCity BuildIt",
                 "8 Ball Pool", "Stardew Valley Mobile", "Dead by Daylight Mobile", "Toca Boca", "Homescapes", "Fishdom", "State of Survival",
                 "Rise of Kingdoms", "Summoners War", "Raid: Shadow Legends", "Afk Arena", "Honkai: Star Rail", "Diablo Immortal", "Eternium",
-                "TETRIS", "Fruit Ninja", "Bad Piggies", "Pixel Gun 3D", "Last Day on Earth", "Plague Inc", "Terraria", "Limbo", "Monument Valley",
-                "Modern Combat 5", "World of Tanks Blitz", "Shadowgun", "Injustice 2", "Mortal Kombat Mobile", "Real Racing 3", "Dead Trigger 2"
+                "TETRIS", "Bad Piggies", "Pixel Gun 3D", "Last Day on Earth", "Plague Inc", "Terraria", "Limbo", "Monument Valley",
+                "Modern Combat 5", "World of Tanks Blitz", "Shadowgun", "Injustice 2", "Mortal Kombat Mobile", "Real Racing 3", "Dead Trigger 2",
+                "Angry Birds 2", "Plants vs Zombies 2", "CSR Racing 2", "War Robots"
             ],
             ("ПК игры", "🖥"): [
                 "Minecraft", "GTA 5", "CS:GO", "Dota 2", "League of Legends", "Cyberpunk 2077", "The Witcher 3", "Red Dead Redemption 2",
@@ -83,7 +85,8 @@ async def seed_default_data():
                 "Battlefield", "Sims 4", "Civilization VI", "Cities: Skylines", "Euro Truck Simulator 2", "Phasmophobia", "Rust",
                 "DayZ", "Tarkov", "Starfield", "Hollow Knight", "Cuphead", "Dark Souls", "Bloodborne", "Sekiro", "Forza Horizon 5",
                 "Life is Strange", "Detroit: Become Human", "Control", "Death Stranding", "Dead Space", "Alan Wake 2", "God of War",
-                "Spider-Man", "Horizon Zero Dawn", "The Last of Us", "Uncharted", "Portal 2", "Left 4 Dead 2", "Team Fortress 2", "Garry's Mod"
+                "Spider-Man", "Horizon Zero Dawn", "The Last of Us", "Uncharted", "Portal 2", "Left 4 Dead 2", "Team Fortress 2", "Garry's Mod",
+                "Payday 2", "Outer Wilds", "Sea of Thieves", "Subnautica", "Crysis", "Metal Gear Solid"
             ],
             ("Приложения", "📲"): [
                 "Instagram", "TikTok", "YouTube", "Telegram", "WhatsApp", "Spotify", "Netflix", "Uber", "Google Maps", "Shazam",
@@ -91,8 +94,8 @@ async def seed_default_data():
                 "Viber", "Skype", "Slack", "Microsoft Teams", "Trello", "Evernote", "Airbnb", "Booking.com", "Tinder", "AliExpress",
                 "Wildberries", "Ozon", "Avito", "Яндекс Go", "Delivery Club", "Самокат", "Сбербанк Онлайн", "Тинькофф", "Госуслуги",
                 "CapCut", "PicsArt", "VSCO", "Lightroom", "Google Drive", "Dropbox", "Kindle", "Twitch", "Steam", "SoundCloud",
-                "Pinterest", "LinkedIn", "eBay", "Amazon", "Reddit", "Behance", "WolframAlpha", "Speedtest", "Truecaller", "Remini",
-                "Duolingo", "SkyScanner", "TripAdvisor", "FaceApp", "Reface", "Nike Run Club", "Flo", "MyFitnessPal", "Strava"
+                "LinkedIn", "eBay", "Amazon", "Behance", "WolframAlpha", "Speedtest", "Truecaller", "Remini", "SkyScanner", "TripAdvisor",
+                "FaceApp", "Reface", "Nike Run Club", "Flo", "MyFitnessPal", "Strava", "InShot", "Kwai", "Badoo", "Hinge"
             ],
             ("Марвел персонажи", "🦸"): [
                 "Человек-паук", "Железный человек", "Тор", "Капитан Америка", "Халк", "Чёрная вдова", "Доктор Стрэндж", "Чёрная пантера",
@@ -101,7 +104,7 @@ async def seed_default_data():
                 "Алая Ведьма", "Ртуть", "Ник Фьюри", "Альтрон", "Хела", "Мистерио", "Зелёный Гоблин", "Доктор Октавиус", "Сорвиголова",
                 "Каратель", "Джессика Джонс", "Люк Кейдж", "Железный Кулак", "Профессор Икс", "Магнето", "Росомаха", "Циклоп",
                 "Шторм", "Джин Грей", "Зверь", "Гамбит", "Роуг", "Ночной Змей", "Колосс", "Китти Прайд", "Кейбл", "Домино",
-                "Блэйд", "Морбиус", "Призрачный гонщик", "Лунный рыцарь", "Вечные", "Один", "Электра", "Кингпин", "Карнаж"
+                "Блэйд", "Морбиус", "Призрачный гонщик", "Лунный рыцарь", "Вечные", "Один", "Электра", "Кингпин", "Карнаж", "Зорро"
             ],
             ("DC персонажи", "🦇"): [
                 "Бэтмен", "Супермен", "Чудо-женщина", "Флэш", "Аквамен", "Джокер", "Харли Квинн", "Лекс Лютор", "Зелёная стрела",
@@ -110,7 +113,7 @@ async def seed_default_data():
                 "Синий Жук", "Константин", "Болотная тварь", "Затанна", "Обратный Флэш", "Генерал Зод", "Дарксайд", "Степной Волк",
                 "Марсианский охотник", "Старфаер", "Бистбой", "Рэйвен", "Робин", "Бэтгёрл", "Супергёрл", "Атом", "Человек-ястреб",
                 "Орлица", "Черная Канарейка", "Доктор Фэйт", "Песочный человек", "Люцифер", "Роршах", "Доктор Манхэттен", "Комедиант",
-                "Озимандия", "Шелковый призрак", "Ночная сова", "Бизарро", "Дарксайд", "Брейниак", "Думсдэй", "Глиноликий", "Виктор Зсасз"
+                "Озимандия", "Шелковый призрак", "Ночная сова", "Бизарро", "Брейниак", "Думсдэй", "Глиноликий", "Виктор Зсасз", "Киллер Фрост"
             ],
             ("Известные люди", "🌟"): [
                 "Илон Маск", "Билл Гейтс", "Стив Джобс", "Альберт Эйнштейн", "Леонардо да Винчи", "Наполеон", "Моцарт", "Майкл Джексон",
@@ -121,7 +124,7 @@ async def seed_default_data():
                 "Лев Толстой", "Федор Достоевский", "Джон Леннон", "Фредди Меркьюри", "Анджелина Джоли", "Брэд Питт",
                 "Леонардо Ди Каприо", "Том Круз", "Джонни Депп", "Киану Ривз", "Бенедикт Камбербэтч", "Мадонна", "Бейонсе", "Тейлор Свифт",
                 "Адель", "Эминем", "Канье Уэст", "Рианна", "Джастин Бибер", "Леди Гага", "Моргенштерн", "Хабиб Нурмагомедов",
-                "Конор Макгрегор", "Майк Тайсон", "Пеле", "Марадона", "Майкл Джордан", "Коби Брайант", "Льюис Хэмилтон"
+                "Конор Макгрегор", "Майк Тайсон", "Пеле", "Марадона", "Майкл Джордан", "Коби Брайант", "Льюис Хэмилтон", "Шумахер"
             ],
             ("Футбольные команды", "⚽"): [
                 "Реал Мадрид", "Барселона", "Манчестер Сити", "Манчестер Юнайтед", "Ливерпуль", "Челси", "Арсенал", "ПСЖ",
@@ -130,7 +133,7 @@ async def seed_default_data():
                 "Лацио", "Фиорентина", "Байер", "РБ Лейпциг", "Тоттенхэм", "Ньюкасл", "Вест Хэм", "Астон Вилла", "Севилья",
                 "Вильярреал", "Валенсия", "Лион", "Марсель", "Монако", "Лилль", "Галатасарай", "Фенербахче", "Бешикташ",
                 "Фламенго", "Палмейрас", "Бока Хуниорс", "Ривер Плейт", "Аль-Наср", "Аль-Хиляль", "Интер Майами", "Лос-Анджелес Гэлакси",
-                "Селтик", "Рейнджерс", "Фейеноорд", "ПСВ", "Порту", "Брюгге", "Андерлехт", "Олимпиакос", "Панатинаикос", "Црвена Звезда"
+                "Селтик", "Рейнджерс", "Фейеноорд", "ПСВ", "Брюгге", "Андерлехт", "Олимпиакос", "Панатинаикос", "Црвена Звезда", "Партизан"
             ],
         }
 
@@ -143,4 +146,91 @@ async def seed_default_data():
 
         await session.commit()
 
-# Оставшаяся часть функций get_all_categories, add_word и т.д. без изменений...
+
+# ─── Категории ───────────────────────────────────────────────────
+
+async def get_all_categories() -> list[Category]:
+    async with async_session_factory() as session:
+        result = await session.execute(select(Category).order_by(Category.id))
+        return result.scalars().all()
+
+
+async def get_category_by_id(category_id: int) -> Optional[Category]:
+    async with async_session_factory() as session:
+        result = await session.execute(select(Category).where(Category.id == category_id))
+        return result.scalar_one_or_none()
+
+
+async def create_category(name: str, emoji: str = "🌍") -> Category:
+    async with async_session_factory() as session:
+        category = Category(name=name, emoji=emoji)
+        session.add(category)
+        await session.commit()
+        await session.refresh(category)
+        return category
+
+
+async def delete_category(category_id: int) -> bool:
+    async with async_session_factory() as session:
+        result = await session.execute(select(Category).where(Category.id == category_id))
+        category = result.scalar_one_or_none()
+        if not category:
+            return False
+        await session.delete(category)
+        await session.commit()
+        return True
+
+
+# ─── Слова ───────────────────────────────────────────────────────
+
+async def get_words_by_category(category_id: int) -> list[Word]:
+    async with async_session_factory() as session:
+        result = await session.execute(
+            select(Word).where(Word.category_id == category_id).order_by(Word.id)
+        )
+        return result.scalars().all()
+
+
+async def get_word_by_id(word_id: int) -> Optional[Word]:
+    async with async_session_factory() as session:
+        result = await session.execute(select(Word).where(Word.id == word_id))
+        return result.scalar_one_or_none()
+
+
+async def add_word(category_id: int, word: str, image_id: Optional[str] = None) -> Word:
+    async with async_session_factory() as session:
+        new_word = Word(category_id=category_id, word=word, image_id=image_id)
+        session.add(new_word)
+        await session.commit()
+        await session.refresh(new_word)
+        return new_word
+
+
+async def set_word_image(word_id: int, image_id: str) -> Optional[Word]:
+    async with async_session_factory() as session:
+        result = await session.execute(select(Word).where(Word.id == word_id))
+        word = result.scalar_one_or_none()
+        if not word:
+            return None
+        word.image_id = image_id
+        await session.commit()
+        await session.refresh(word)
+        return word
+
+
+async def delete_word(word_id: int) -> bool:
+    async with async_session_factory() as session:
+        result = await session.execute(select(Word).where(Word.id == word_id))
+        word = result.scalar_one_or_none()
+        if not word:
+            return False
+        await session.delete(word)
+        await session.commit()
+        return True
+
+
+async def get_random_word(category_id: int) -> Optional[Word]:
+    words = await get_words_by_category(category_id)
+    if not words:
+        return None
+    return random.choice(words)
