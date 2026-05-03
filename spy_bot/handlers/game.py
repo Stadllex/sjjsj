@@ -59,7 +59,13 @@ async def cb_reveal_role(query: CallbackQuery, callback_data: RevealCallback, bo
 
     else:
         state = _game_state.get(chat_id, {})
-        if not state.get("location_word"):
+        # Сбрасываем состояние если это первый мирный игрок,
+        # категория изменилась, или состояние отсутствует
+        if (
+            not state.get("location_word")
+            or state.get("category_id") != category_id
+            or player_index == 1
+        ):
             word = await get_random_word(category_id)
             if not word:
                 await query.answer("⚠️ В категории нет слов!", show_alert=True)
@@ -67,6 +73,7 @@ async def cb_reveal_role(query: CallbackQuery, callback_data: RevealCallback, bo
             _game_state[chat_id] = {
                 "location_word": word.word,
                 "location_image_id": word.image_id or "",
+                "category_id": category_id,
             }
             state = _game_state[chat_id]
 
@@ -131,7 +138,10 @@ async def cb_next_player(query: CallbackQuery, callback_data: NextPlayerCallback
         pass
 
     if next_player > total_players:
-        _game_state.pop(chat_id, None)
+        # Сохраняем локацию до очистки, чтобы показать её по кнопке
+        final_state = _game_state.pop(chat_id, {})
+        location_word = final_state.get("location_word", "???")
+        location_image_id = final_state.get("location_image_id", "")
 
         spy_word = "шпион" if spy_count == 1 else "шпиона" if spy_count < 5 else "шпионов"
         await query.message.answer(
@@ -143,6 +153,12 @@ async def cb_next_player(query: CallbackQuery, callback_data: NextPlayerCallback
             parse_mode="MarkdownV2",
             reply_markup=timer_keyboard(duration=300),
         )
+        # Сохраняем локацию для раскрытия после голосования
+        _game_state[chat_id] = {
+            "reveal_word": location_word,
+            "reveal_image_id": location_image_id,
+            "category_id": -1,  # маркер "игра завершена"
+        }
     else:
         await query.message.answer(
             f"📱 *Игрок {next_player}*, возьми телефон\\!\n\n"
@@ -194,10 +210,36 @@ async def cb_timer_start(query: CallbackQuery, callback_data: TimerCallback, bot
             chat_id=chat_id,
             message_id=query.message.message_id,
             total_seconds=duration,
+            timer_tasks=_timer_tasks,
         )
     )
     _timer_tasks[chat_id] = task
     await query.answer(f"⏱ Таймер {mins} мин запущен!")
+
+
+@router.callback_query(TimerCallback.filter(F.action == "reveal"))
+async def cb_reveal_location(query: CallbackQuery):
+    chat_id = query.message.chat.id
+    state = _game_state.pop(chat_id, {})
+    word = state.get("reveal_word", "???")
+    image_id = state.get("reveal_image_id", "")
+
+    safe_word = escape_md(word)
+    text = (
+        f"🔍 *Локация была:* `{safe_word}`\\!\n\n"
+        f"_Используй /start чтобы сыграть снова\\._"
+    )
+
+    try:
+        await query.message.delete()
+    except Exception:
+        pass
+
+    if image_id:
+        await query.message.answer_photo(photo=image_id, caption=text, parse_mode="MarkdownV2")
+    else:
+        await query.message.answer(text, parse_mode="MarkdownV2")
+    await query.answer()
 
 
 @router.callback_query(TimerCallback.filter(F.action == "stop"))
@@ -208,10 +250,24 @@ async def cb_timer_stop(query: CallbackQuery, bot: Bot):
         _timer_tasks[chat_id].cancel()
         del _timer_tasks[chat_id]
 
+    # Очищаем активную игру, но сохраняем локацию для раскрытия
+    reveal_state = _game_state.get(chat_id, {})
+    reveal_word = reveal_state.get("reveal_word")
+
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    from keyboards.callbacks import TimerCallback as TC
+    builder = InlineKeyboardBuilder()
+    if reveal_word:
+        builder.button(
+            text="🔍 Раскрыть локацию",
+            callback_data=TimerCallback(action="reveal", duration=0),
+        )
+
     await query.message.edit_text(
         "⏹ *Таймер остановлен\\.*\n\n"
         "Голосуйте — кто шпион\\?\n\n"
         "_Используй /start чтобы сыграть снова\\!_",
         parse_mode="MarkdownV2",
+        reply_markup=builder.as_markup() if reveal_word else None,
     )
     await query.answer("Таймер остановлен.")

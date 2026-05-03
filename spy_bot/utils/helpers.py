@@ -24,7 +24,7 @@ def ordinal(n: int) -> str:
     return f"{n}-й"
 
 
-async def countdown_task(bot, chat_id: int, message_id: int, total_seconds: int) -> None:
+async def countdown_task(bot, chat_id: int, message_id: int, total_seconds: int, timer_tasks: dict) -> None:
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     from keyboards.callbacks import TimerCallback
 
@@ -55,12 +55,24 @@ async def countdown_task(bot, chat_id: int, message_id: int, total_seconds: int)
         except Exception:
             return
 
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    from keyboards.callbacks import TimerCallback
+
+    builder_end = InlineKeyboardBuilder()
+    builder_end.button(
+        text="🔍 Раскрыть локацию",
+        callback_data=TimerCallback(action="reveal", duration=0),
+    )
+
     try:
         await bot.edit_message_text(
             chat_id=chat_id,
             message_id=message_id,
             text="🔔 *Время вышло\\!* Голосуйте — кто шпион?",
             parse_mode="MarkdownV2",
+            reply_markup=builder_end.as_markup(),
         )
     except Exception:
         pass
+    finally:
+        timer_tasks.pop(chat_id, None)
